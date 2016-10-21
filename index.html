@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+  <head>
+		<meta charset="UTF-8">
+     	<link rel=stylesheet type=text/css href="index.css">
+     	<link rel="stylesheet" href="leaflet/leaflet.css" />
+		<script src="leaflet/leaflet-src.js"></script>
+		<script src="jQuery/jquery.js"></script>
+  </head>
+  <body>
+    <div id="kopf">
+
+    <table border="0" style="width:100%">
+      <tr>
+        <td>
+          <img src="my_logo.png" class="logo">
+
+        </td>
+        <td>
+          <h1>RE:Map</h1>
+        </td>
+        <td>
+          <img src="my_logo.png" class="logo" style="float:right">
+        </td>
+      </tr>
+    </table>
+
+
+    <form>
+        <input type="text" name="suchfeld" id="suchfeld" placeholder="Suchbegriff">
+        <input type="button" id="btn-search" value="Suchen" onclick="searchFunc();"><br>
+        <input type="checkbox" class="checks" name="check_floh" id="check_floh" checked>
+        <label for="check_floh" class="checks" id="label_check_floh">Flohm&auml;rkte</label>
+        <input type="checkbox" class="checks" name="check_re" id="check_re" checked>
+        <label for="check_re" class="checks" id="label_check_re">Recycling</label>
+    </form>
+  </div>
+
+  <!-- xxxxxxxxxxxxxxxxxxxx -->
+
+  	<div id="map"></div>
+
+	<script type="text/javascript">
+
+	searchFunc = function () {
+		var search = $("#suchfeld").val();
+		floMap = document.getElementById("check_floh").checked;
+		reMap = document.getElementById("check_re").checked;
+
+		console.log(floMap + " " + reMap);
+
+		init = true;
+		map.remove();
+		readData(search);
+	}
+
+	
+	var txt = document.getElementById("suchfeld");
+	var go = document.getElementById("btn-search");
+	txt.addEventListener("keypress", function(event) {
+	    if (event.keyCode == 13){
+	    	event.preventDefault();
+	        go.click();
+	    }
+	});
+
+		buildMap = function(database, marker){
+			$.getJSON(database,function(json2){
+				if(!json2) return;
+				json2.forEach(function(item, index){
+					var name = item["name"];
+					var gueter = item["gueter"];
+					var transport = item["transport"];
+					var details = item["details"];
+					var streetDisplay = item["streetDisplay"]
+					var street = item["street"];
+					$.getJSON("http://nominatim.openstreetmap.org/search?street="+street+"&city="+city+"&format=json",function(json){
+						if(json.length==0){
+							console.log(street);
+							return;
+						};
+						var latitude = json[0]["lat"];
+						var longitude = json[0]["lon"];
+						if(init){
+							map = L.map('map').setView([latitude, longitude], 13);
+							OpenStreetMap = L.tileLayer('http://{s}.tile.openstreetmap.se/hydda/full/{z}/{x}/{y}.png', { maxZoom: 25, minZoom: 5, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
+							init = false;
+						};
+						L.marker([latitude, longitude], {icon: marker})
+						.bindPopup("<b>"+name+"</b><br><br>"+streetDisplay+"<br><br>Güter: "+gueter+"<br><br>Transport: "+transport)
+						.openPopup()
+						.addTo(map);
+					});
+				});
+			});
+		}
+
+		buildMapL = function(database, marker){
+			$.getJSON(database,function(json3){
+				if(!json3) return;
+				json3.forEach(function(item, index){
+					var name = item["name"];
+					var days = item["days"];
+					var time = item["time"];
+					var owner = item["owner"];
+					var comment = item["comment"];
+					var website = item["website"];
+					var email = item["email"];
+					var latitude = item["lat"];
+					var longitude = item["lon"];
+					if(init){
+						map = L.map('map').setView([latitude, longitude], 13);
+						OpenStreetMap = L.tileLayer('http://{s}.tile.openstreetmap.se/hydda/full/{z}/{x}/{y}.png', { maxZoom: 25, minZoom: 5, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
+						init = false;
+					};
+					if(item["website"]=="Keine Angabe"){
+						L.marker([latitude, longitude], {icon: marker})
+						.bindPopup("<b>"+name+"</b><br><br>Öffnungszeiten: "+time+"<br><br>Tage: "+days+"<br><br>Betreiber: "+owner+"<br><br>Website: "+website+"<br><br>Email: "+email+"<br><br>Bemerkungen: "+comment)
+						.openPopup()
+						.addTo(map);
+					}else{
+						L.marker([latitude, longitude], {icon: marker})
+						.bindPopup("<b>"+name+"</b><br><br>Öffnungszeiten: "+time+"<br><br>Tage: "+days+"<br><br>Betreiber: "+owner+"<br><br>Website: <a href=http://"+website+">"+website+"</a><br><br>Email: "+email+"<br><br>Bemerkungen: "+comment)
+						.openPopup()
+						.addTo(map);
+					}
+				});
+			});
+		}
+
+
+		readData = function(search){
+			if(reMap){
+				buildMap("ReJson_Parser.php?q="+search, marker);
+				console.log("1st done!");
+			}
+			if(floMap){
+				buildMapL("FloJson_Parser.php?q="+search, redmarker);
+				console.log("2nd done!");
+			}
+		}
+
+
+
+
+		city = "Berlin";
+		init = true;
+		gotCoords = false;
+		map = {};
+		OpenStreetMap = {};
+		reMap = true;
+		floMap = true;
+
+		var marker = L.icon({
+			iconUrl:"leaflet/images/marker-icon.png",
+			shadowUrl:"leaflet/images/marker-shadow.png"
+		});
+		var redmarker = L.icon({
+			iconUrl:"leaflet/images/red-marker-icon.png",
+			shadowUrl:"leaflet/images/marker-shadow.png"
+		});
+
+		readData("");
+	</script>
+
+
+  <!-- xxxxxxxxxxxxxxxxxxxx -->
+
+
+
+
+  <footer style="position: fixed; bottom: 0; text-align: center; font-size: 20px;">
+    <a href="https://github.com/Jugendhackt/RE-Map">Github</a>
+    <a href="https://hackdash.org/projects/58022b74d9284f016c047663">Hackdash</a>
+  </footer>
+  </body>
+</html>
