@@ -28,7 +28,7 @@ function read_json($json, $final_json){
         if(!empty($item['location'])) $final_array['name'] = $item['location'];
         if(!empty($item['tage'])) $final_array['days'] = $item['tage'];
         if(!empty($item['betreiber'])) $final_array['owner'] = $item['betreiber'];
-        if(!empty($item['zeit'])) $final_array['time'] = $item['zeit'];
+        if(!empty($item['zeiten'])) $final_array['time'] = $item['zeiten'];
         if(!empty($item['bemerkung'])) $final_array['comment'] = $item['bemerkung'];
         if(!empty($item['www'])) $final_array['website'] = $item['www'];
         if(!empty($item['email'])) $final_array['email'] = $item['email'];
