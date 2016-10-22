@@ -28,6 +28,7 @@
 
 
     <form>
+    	<input type="button" id="btn-add" value="Hinzufügen" onclick="">
         <input type="text" name="suchfeld" id="suchfeld" placeholder="Suchbegriff">
         <input type="button" id="btn-search" value="Suchen" onclick="searchFunc();"><br>
         <input type="checkbox" class="checks" name="check_floh" id="check_floh" checked>
@@ -42,6 +43,8 @@
   	<div id="map"></div>
 
 	<script type="text/javascript">
+
+	coordCache = {};
 
 	searchFunc = function () {
 		var search = $("#suchfeld").val();
@@ -65,49 +68,53 @@
 	    }
 	});
 
-		buildMap = function(database, marker){
-
+		buildMap = function(database, search, marker){
+			var coords = [[]];
+			database = database+search;
 			$.getJSON(database,function(json2){
 				if(!json2) return;
 				json2.forEach(function(item, index){
-					var name = item["name"];
-					var gueter = item["gueter"];
-					var transport = item["transport"];
-					var details = item["details"];
-					var streetDisplay = item["streetDisplay"]
-					var street = item["street"];
-					$.getJSON("http://nominatim.openstreetmap.org/search?street="+street+"&city="+city+"&format=json",function(json){
-						if(json.length==0){
-							console.log(street);
-							return;
-						};
-						var latitude = json[0]["lat"];
-						var longitude = json[0]["lon"];
-						if(init){
-							map = L.map('map').setView([latitude, longitude], 13);
-							OpenStreetMap = L.tileLayer('http://{s}.tile.openstreetmap.se/hydda/full/{z}/{x}/{y}.png', { maxZoom: 25, minZoom: 5, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
-							init = false;
-						};
-						L.marker([latitude, longitude], {icon: marker})
-						.bindPopup("<b>"+name+"</b><br><br>"+streetDisplay+"<br><br>Güter: "+gueter+"<br><br>Transport: "+transport)
-						.openPopup()
-						.addTo(map);
+						console.log("Coord-Dict");
+						console.log(coordCache);
+						if(!(search in coordCache)){
+							$.getJSON("http://nominatim.openstreetmap.org/search?street="+item["street"]+"&city="+city+"&format=json",function(json){
+								if(json.length==0){
+									console.log(street);
+									return;
+								};
+								coords[index] = [json[0]["lat"], json[0]["lon"], item];
+								buildMapMark(json[0]["lat"], json[0]["lon"], item);
+								console.log("not cached "+(search in coordCache));
+							});
+						}else{
+							buildMapMark(coordCache[search][index][0], coordCache[search][index][1], coordCache[search][index][2]);
+							console.log("Cached!");
+						}
 					});
-				});
+				if(!(search in coordCache)) 
+					coordCache[search] = coords;
+				//console.log(coordCache);
 			});
 		}
 
-		buildMapL = function(database, marker){
+		buildMapMark = function(lat, lon, item){
+			if(init){
+				map = L.map('map').setView([lat, lon], 13);
+				OpenStreetMap = L.tileLayer('http://{s}.tile.openstreetmap.se/hydda/full/{z}/{x}/{y}.png', { maxZoom: 25, minZoom: 5, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
+				init = false;
+			};
+			L.marker([lat, lon], {icon: marker})
+			.bindPopup("<b>"+item["name"]+"</b><br><br>"+item["streetDisplay"]+"<br><br>Güter: "+item["gueter"]+"<br><br>Transport: "+item["transport"])
+			.openPopup()
+			.addTo(map);
+		}
+
+		buildMapL = function(database, search, marker){
+			database = database+search;
 			$.getJSON(database,function(json3){
+				console.log("start of flo "+new Date());
 				if(!json3) return;
 				json3.forEach(function(item, index){
-					var name = item["name"];
-					var days = item["days"];
-					var time = item["time"];
-					var owner = item["owner"];
-					var comment = item["comment"];
-					var website = item["website"];
-					var email = item["email"];
 					var latitude = item["lat"];
 					var longitude = item["lon"];
 					if(init){
@@ -117,27 +124,30 @@
 					};
 					if(item["website"]=="Keine Angabe"){
 						L.marker([latitude, longitude], {icon: marker})
-						.bindPopup("<b>"+name+"</b><br><br>Öffnungszeiten: "+time+"<br><br>Tage: "+days+"<br><br>Betreiber: "+owner+"<br><br>Website: "+website+"<br><br>Email: "+email+"<br><br>Bemerkungen: "+comment)
+						.bindPopup("<b>"+item["name"]+"</b><br><br>Öffnungszeiten: "+item["time"]+"<br><br>Tage: "+item["days"]+"<br><br>Betreiber: "+item["owner"]+"<br><br>Website: "+item["website"]+"<br><br>Email: "+item["email"]+"<br><br>Bemerkungen: "+item["comment"])
 						.openPopup()
 						.addTo(map);
 					}else{
 						L.marker([latitude, longitude], {icon: marker})
-						.bindPopup("<b>"+name+"</b><br><br>Öffnungszeiten: "+time+"<br><br>Tage: "+days+"<br><br>Betreiber: "+owner+"<br><br>Website: <a href=http://"+website+">"+website+"</a><br><br>Email: "+email+"<br><br>Bemerkungen: "+comment)
+						.bindPopup("<b>"+item["name"]+"</b><br><br>Öffnungszeiten: "+item["time"]+"<br><br>Tage: "+item["days"]+"<br><br>Betreiber: "+item["owner"]+"<br><br>Website: <a href=http://"+item["website"]+">"+item["website"]+"</a><br><br>Email: "+item["email"]+"<br><br>Bemerkungen: "+item["comment"])
 						.openPopup()
 						.addTo(map);
 					}
 				});
+				console.log("end of flo "+new Date());
 			});
 		}
 
 
 		readData = function(search){
 			if(reMap){
-				buildMap("ReJson_Parser.php?q="+search, marker);
+				console.log("preRE "+new Date);
+				buildMap("ReJson_Parser.php?q=", search, marker);
 				console.log("1st done!");
 			}
 			if(floMap){
-				buildMapL("FloJson_Parser.php?q="+search, redmarker);
+				console.log("preFlo "+new Date);
+				buildMapL("FloJson_Parser.php?q=", search, redmarker);
 				console.log("2nd done!");
 			}
 		}
