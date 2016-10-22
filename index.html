@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+  		<title>Maori v1.0</title>
 		<meta charset="UTF-8">
      	<link rel=stylesheet type=text/css href="index.css">
      	<link rel="stylesheet" href="leaflet/leaflet.css" />
@@ -17,7 +18,7 @@
 
         </td>
         <td>
-          <h1>RE:Map</h1>
+          <h1>Maori</h1>
         </td>
         <td>
           <img src="my_logo.png" class="logo" style="float:right">
@@ -65,6 +66,7 @@
 	});
 
 		buildMap = function(database, marker){
+
 			$.getJSON(database,function(json2){
 				if(!json2) return;
 				json2.forEach(function(item, index){
