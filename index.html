@@ -28,13 +28,19 @@
 
 
     <form>
-    	<input type="button" id="btn-add" value="Hinzufügen" onclick="">
         <input type="text" name="suchfeld" id="suchfeld" placeholder="Suchbegriff">
         <input type="button" id="btn-search" value="Suchen" onclick="searchFunc();"><br>
         <input type="checkbox" class="checks" name="check_floh" id="check_floh" checked>
         <label for="check_floh" class="checks" id="label_check_floh">Flohm&auml;rkte</label>
         <input type="checkbox" class="checks" name="check_re" id="check_re" checked>
         <label for="check_re" class="checks" id="label_check_re">Recycling</label>
+    </form>
+    <form>
+    	<br><input type="text" id="name" placeholder="Name">
+    	<input type="text" id="street" placeholder="Adresse">
+    	<input type="text" id="gueter" placeholder="Güter">
+    	<input type="text" id="transport" placeholder="Transport">
+    	<input type="button" id="btn-add" value="Hinzufügen" onclick="addFunc();">
     </form>
   </div>
 
@@ -46,7 +52,25 @@
 
 	coordCache = {};
 
-	searchFunc = function () {
+	addFunc = function(){
+		var item = [];
+		item["name"] = $("#name").val();
+		item["street"] = $("#street").val();
+		item["streetDisplay"] = $("#street").val();
+		item["gueter"] = $("#gueter").val();
+		item["transport"] = $("#transport").val();
+		console.log(item);
+		$.getJSON("http://nominatim.openstreetmap.org/search?street="+item["street"]+"&city="+city+"&format=json"),function(json){
+			if(json.length==0){
+				console.log(street);
+				return;
+			};
+			console.log("callback add marker");
+			buildMapMark(json[0]["lat"], json[0]["lon"], item);
+		}
+	}
+
+	searchFunc = function(){
 		var search = $("#suchfeld").val();
 		floMap = document.getElementById("check_floh").checked;
 		reMap = document.getElementById("check_re").checked;
