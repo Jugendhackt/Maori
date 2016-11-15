@@ -13,4 +13,4 @@ Projekt bei:
 - Moritz Junge
 - Karl Nehring
 - Janick Porfert
-- Sören Taschbozkfi(?)
+- Sören Kaschubowski
